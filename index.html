@@ -75,6 +75,9 @@
   </style>
 </head>
 <body class="bg-gradient-to-br from-pink-50 via-rose-50 to-violet-50 text-slate-800 [font-family:'Poppins',sans-serif]">
+  <!-- 🔊 BACKGROUND MUSIC (no controls, auto/loop). Put your file at the same path and rename below. -->
+  <audio id="bgm" src="aa.mp3" preload="auto" loop playsinline></audio>
+
   <!-- Floating hearts layer -->
   <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10">
     <div class="heart left-[10%] bottom-[-10%]">💖</div>
@@ -303,6 +306,7 @@ Rare type ki ladki — classy, caring, one of a kind."
   </dialog>
 
   <script>
+    // ----- Existing UI JS -----
     const dlg = document.getElementById('dlg');
     const letter = document.getElementById('letter');
     const btnC = document.getElementById('btn-compliments');
@@ -311,7 +315,7 @@ Rare type ki ladki — classy, caring, one of a kind."
     const sText = document.getElementById('surprise-text');
 
     btnC.addEventListener('click', () => dlg.showModal());
-    btnL.addEventListener('click', () => letter.showModal());
+    btnL?.addEventListener('click', () => letter.showModal());
 
     document.getElementById('addC').addEventListener('click', () => {
       const input = document.getElementById('newC');
@@ -327,6 +331,55 @@ Rare type ki ladki — classy, caring, one of a kind."
       btnS.textContent = 'Opened ✓';
       sText.classList.remove('hidden');
     });
+
+    // ----- Background Music Autoplay (no buttons) -----
+    // Works across modern browsers by attempting autoplay on load.
+    // If blocked, it will start on the user's first interaction (tap/click/scroll/keypress)
+    const bgm = document.getElementById('bgm');
+
+    function tryPlay() {
+      if (!bgm) return;
+      // Set a comfortable volume; keep unmuted for a natural start.
+      bgm.volume = 0.5;
+      bgm.muted = false;
+      const p = bgm.play();
+      if (p && typeof p.then === 'function') {
+        p.catch(() => {
+          // Autoplay likely blocked. We'll wait for the first gesture.
+          armGestureStart();
+        });
+      }
+    }
+
+    let armed = false;
+    function startOnGesture() {
+      if (!bgm) return;
+      bgm.muted = false;
+      bgm.volume = 0.5;
+      bgm.play().catch(() => {});
+      disarmGestureStart();
+    }
+    function armGestureStart() {
+      if (armed) return;
+      armed = true;
+      ['click','touchstart','keydown','scroll'].forEach(evt => document.addEventListener(evt, startOnGesture, { once: true, passive: true }));
+    }
+    function disarmGestureStart() {
+      ['click','touchstart','keydown','scroll'].forEach(evt => document.removeEventListener(evt, startOnGesture, { once: true }));
+      armed = false;
+    }
+
+    // Resume if user switches tabs
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        if (bgm && bgm.paused) {
+          bgm.play().catch(() => {});
+        }
+      }
+    });
+
+    // Kick things off ASAP
+    window.addEventListener('load', tryPlay);
   </script>
 </body>
 </html>
